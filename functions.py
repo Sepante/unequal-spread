@@ -2,6 +2,15 @@ import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
 
+def init_agents(agents, N):
+    #global agents
+    agents['strategy'] = 1 #initially they all choose to go out.
+    agents['health'] = 0 #initially they all choose to go out.
+    agents['future'] = 0 #initially they all choose to go out.
+    infection_seed = np.random.randint(0, N) #the first infected node
+    agents['health'][infection_seed] = 1
+    agents['future'][infection_seed] = 1
+
 
 def infect(G, agents, transmit_prob):
     health_list = (agents['health'] > 0)
@@ -43,7 +52,7 @@ def get_newly_recovered_agents(agents, social_class = -1):
     
     
 def predict_infected_num(agents, t_prediction, learning_rate):
-    print('inside = ', t_prediction)
+    #print('inside = ', t_prediction)
 
     newly_infected = np.sum( get_newly_recovered_agents(agents, -1) )
     if newly_infected > t_prediction:
@@ -66,6 +75,15 @@ def update_strategy(agents, exp_stay_home_reward, infection_reward_times_infecte
         staying_home_prob = exp_stay_home_reward[social_class]/ (exp_stay_home_reward[social_class] + exp_going_out_reward)
         
         agents['strategy'][ this_class_agents ] = np.random.choice([0, 1], np.sum(this_class_agents), p=[staying_home_prob, 1- staying_home_prob] )
-    print(infection_reward_times_infected_num , staying_home_prob)
+    #print(infection_reward_times_infected_num , staying_home_prob)
     #print(staying_home_prob)
     return survivor_num
+
+def get_results(agents, social_class_num):
+        finally_infected = agents['health'] < 0
+        infected_classes = agents[finally_infected]['social_class']
+        print(infected_classes)
+        infected_from_each_class = np.zeros(social_class_num, int)
+        for social_class in range( social_class_num ):
+            infected_from_each_class[social_class] = np.sum( infected_classes == social_class )
+        return infected_from_each_class

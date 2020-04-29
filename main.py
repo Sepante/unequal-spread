@@ -1,25 +1,27 @@
 import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
+import pandas as pd
 from functions import *
+from scipy.stats import itemfreq
 
 #np.random.seed(0)
 
-temp_N = 15
+temp_N = 120
 G = nx.erdos_renyi_graph(temp_N, 3 / temp_N)
 
 N = len(G) #total number of nodes
 
-run_number = 1
-run_time = 10
-transmit_prob = 0.25
+run_number = 20
+run_time = 20000000
+transmit_prob = 0.5
 recovery_prob = 0.25
 learning_rate = 0.5
-beta = 0.8
+beta = 1
 
 
 agents = np.zeros((N), dtype=[('health', int), ('future', int),\
-('strategy',int), ('social_class',int), ('reward',float)] )
+('strategy',int), ('social_class',int)] )
 
 social_class_num = 3
 
@@ -32,13 +34,6 @@ exp_stay_home_reward = tuple(np.exp(beta * stay_home_reward))
 
 agents['social_class'] = np.random.randint(0, 3, N)
 
-agents['strategy'] = 1 #initially they all choose to go out.
-infection_seed = np.random.randint(0, N) #the first infected node
-agents['health'][infection_seed] = 1
-agents['future'][infection_seed] = 1
-
-#agents['social_class'] = 0
-
 #health : 0 -> suceptible
 #health > 0 -> number of days after infection
 #health : -1 -> recovered (removed)
@@ -47,11 +42,17 @@ agents['future'][infection_seed] = 1
 #social class -> 0, 1, 2 respectively low, medium and high economic class
 
 
-infected_num = 1
-survivor_num = 1
-prediction = 1
+
+results = pd.DataFrame( np.zeros((run_number, social_class_num), int) )
+results.columns = ['class_'+str(i) for i in range(social_class_num) ]
 if __name__ == "__main__":
     for run in range(run_number):
+        infected_num = 1
+        survivor_num = 1
+        prediction = 1
+
+        #agents = init_agents(agents, N)
+        init_agents(agents, N)
         for t in range(run_time):
             if infected_num >= 1 and survivor_num >= 1: #if there are infectious agents and also if not everyone is infected
                 infected_num = infect(G, agents, transmit_prob) #nodes infect their neighbors
@@ -60,3 +61,8 @@ if __name__ == "__main__":
                 prediction = predict_infected_num(agents, prediction, learning_rate) #predict the number of upcoming infected agents for the next step
 
                 survivor_num = update_strategy(agents, exp_stay_home_reward, prediction * infection_reward, beta) #update strategies (going out and staying in)
+                                
+                
+        results.iloc[run] = get_results(agents, social_class_num)
+
+results.to_csv('infected_for_each_class.csv')
