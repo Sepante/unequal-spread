@@ -3,11 +3,12 @@ import networkx as nx
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import time
+import matplotlib.patches as mpatches
 from matplotlib.lines import Line2D
 from matplotlib.patches import Patch
 import matplotlib
 from matplotlib import gridspec
-matplotlib.rcParams.update({'font.size': 15})
+#matplotlib.rcParams.update({'font.size': 11})
 import networkx as nx
 
 from main import *
@@ -17,6 +18,7 @@ graph_type = 'erdos'
 pos = {}
 if graph_type == 'erdos':
     pos = nx.circular_layout(G)
+    #pos = nx.kamada_kawai_layout(G)
     True
 elif graph_type == 'grid':
     #pos = nx.circular_layout(G)
@@ -30,18 +32,19 @@ pos_array = np.array( list( pos.values() ) )
 
 #node_size = 80000
 
-#fig, axes= plt.subplots(1,2, figsize=(5,5))s
+#fig, axes= plt.subplots(1,2, figsize=(5,5))
 #fig.subplots_adjust(wspace = 0)
 #ax, ay = axes
-figure_ratio = 1
-fig = plt.figure(figsize=(5*(1+figure_ratio), 5 ) )
+figure_ratio = 0.65
+fig = plt.figure(figsize=(5*(0.9+figure_ratio), 5 ) )
 fig.subplots_adjust(wspace = 0)
 gs = gridspec.GridSpec(1, 2, width_ratios=[1, figure_ratio]) 
 ax = plt.subplot(gs[0])
 #ax0.plot(x, y)
 ay = plt.subplot(gs[1])
 #ay.plot(y, x)
-color_code = [ 'blue', 'red', 'green' ]
+#color_code = [ 'blue', 'red', 'gray' ]
+color_code = [ 'dodgerblue', 'tab:red', 'tab:gray' ]
 shape_code = [ 's', 'o', '^' ]
 def display_city(create_legend = True):
     alpha = 0.8
@@ -57,22 +60,26 @@ def display_city(create_legend = True):
             this_subgroup_list = np.where(this_subgroup)[0]
             #print('so: ', social_class)
             if (len(this_subgroup_list)):
-                nx.draw_networkx_nodes(G,pos = pos, ax = ax, nodelist=list(this_subgroup_list),  node_color = color_code[health_status], node_shape = shape_code[social_class], alpha = alpha, edgecolors = 'r')
+                nx.draw_networkx_nodes(G,pos = pos, ax = ax, nodelist=list(this_subgroup_list),  node_color = color_code[health_status]\
+               , node_shape = shape_code[social_class], alpha = 1,\
+               edgecolors = 'black')
+               #edgecolors = color_code[health_status)
                 #nx.draw_networkx_nodes(G,pos = pos, ax = ax, nodelist=np.array([1,2]),  node_color = 'r', node_shape = 'o', alpha = alpha, edgecolors = 'r')
     
     leavers = list( np.where(agents['strategy'] == 1)[0] )
     visible_edges = [edge for edge in G.edges() if( edge[0] in leavers  and edge[1] in leavers) ]
     invisible_edges = [edge for edge in G.edges() if not ( edge[0] in leavers  and edge[1] in leavers) ]
     
-    nx.draw_networkx_edges(G,pos = pos, ax = ax, alpha = alpha/2, width = 2.3, edge_color = 'black', edgelist = visible_edges)
-    nx.draw_networkx_edges(G,pos = pos, ax = ax, alpha = alpha/4, width = 1 ,edge_color = 'black', edgelist = invisible_edges)
+    nx.draw_networkx_edges(G,pos = pos, ax = ax, alpha = alpha*0.8, width = 1.2, edge_color = 'black', edgelist = visible_edges)
+    nx.draw_networkx_edges(G,pos = pos, ax = ax, alpha = alpha/4, width = 1, style = 'dashed' ,edge_color = 'black', edgelist = invisible_edges)
     
     stayers = list( np.where(agents['strategy'] == 0)[0] )
     stayers_pos = pos_array[stayers]
     x = stayers_pos[:, 0]
     y = stayers_pos[:, 1]
 
-    ax.scatter(x, y, s = 2000, facecolors='none', edgecolors='r', linewidth = 2.8)
+    ax.scatter(x, y, s = 1700, facecolors='none', linestyle='dashdot' \
+       , edgecolors='green', linewidth = 1.8, alpha = 0.8)
 
     
     
@@ -83,32 +90,38 @@ def display_city(create_legend = True):
     #ax.scatter(x, y, s = 2000, facecolors='none', edgecolors='r', linewidth = 2.8)
     #nx.draw_networkx_labels(G,pos , ax = ax, font_size=16)
     if create_legend:
+        grid = np.mgrid[0.2:0.8:3j, 0.2:0.8:3j].reshape(2, -1).T
         ay.axis('off')
         legend_elements = [
-                       Line2D([0], [0], marker='o', color='w', markeredgecolor='blue', label='Susceptible',
-                              markerfacecolor='b', markersize=10, alpha = alpha),
+                       Line2D([0], [0], marker='o', color='w', markeredgecolor='k', label='Susceptible',
+                              markerfacecolor='dodgerblue', markersize=10, alpha = alpha),
                               
-                       Line2D([0], [0], marker='o', color='w', markeredgecolor='red', label='Infectious',
-                              markerfacecolor='red', markersize=10, alpha = alpha),
+                       Line2D([0], [0], marker='o', color='w', markeredgecolor='k', label='Infectious',
+                              markerfacecolor='tab:red', markersize=10, alpha = alpha),
                               
-                       Line2D([0], [0], marker='o', color='w', markeredgecolor='g', label='Removed',
-                              markerfacecolor='g', markersize=10, alpha = alpha),
+                       Line2D([0], [0], marker='o', color='w', markeredgecolor='k', label='Removed',
+                              markerfacecolor='tab:gray', markersize=10, alpha = alpha),
 
                               
                        Line2D([0], [0], marker='s', color='w', markeredgecolor='black', label='Lower Class',
-                              markerfacecolor='white', markersize=12, alpha = alpha),
+                              markerfacecolor='white', markersize=10, alpha = alpha),
                        Line2D([0], [0], marker='o', color='w', markeredgecolor='black', label='Middle Class',
-                              markerfacecolor='white', markersize=12, alpha = alpha),
+                              markerfacecolor='white', markersize=10, alpha = alpha),
                        Line2D([0], [0], marker='^', color='w', markeredgecolor='black', label='Upper Class',
-                              markerfacecolor='white', markersize=12, alpha = alpha),
-                       Line2D([0], [0], marker='o', color='w', linewidth = 2, markeredgecolor='red', label='Staying at Home',
-                              markerfacecolor='white', markersize=20, alpha = alpha),
-                       #Patch(facecolor='white', linewidth = 2, edgecolor='r',
-                         #label='Color Patch')
+                              markerfacecolor='white', markersize=10, alpha = alpha),
+                       Line2D([0], [0], marker='o', color='w', linewidth = 2, markeredgecolor='green', label='Staying Home',
+                              markerfacecolor='white', markersize=14, alpha = alpha, linestyle='dashdot'),
+                              Line2D([0], [0], color='k', lw=1.2, label='Active Contact', alpha = alpha * 0.8),                              
+                              Line2D([0], [0], color='k', lw=1, label='Inactive Contact', linestyle='--', alpha = alpha * 0.5),
+                              
+                       #Patch(facecolor='white', linewidth = 2, edgecolor='r', linestyle ='solid',
+                         #label='Color Patch'),
+                       #matplotlib.patches.Circle((10, 10), edgecolor='r'),
+                       #mpatches.Wedge(grid[0], 0.1, 30, 270, ec="none")
 
 
     ]
-        ay.legend( handles=legend_elements, loc = 'lower center' )
+        ay.legend( handles=legend_elements, loc = 'center')
         #ay.legend(handles = legend_elements, bbox_to_anchor=(0.5, 0.5))#,
         #   bbox_transform=plt.gcf().transFigure)
     #plt.show()
@@ -135,6 +148,7 @@ print(agents['health'] == 0)
 prediction = 1
 pred = 1
 animation_phases = 3
+init_agents(agents, N)
 def animate(t):
     global pred
     print('animate says = ',pred)
@@ -143,12 +157,13 @@ def animate(t):
     ay.clear()
     num_string = str( int( t ) )
     #ay.set_title("$t$ ="+ num_string)
-    ay.text(0.4 , 0.7 , "$t$ ="+ num_string )
+    ay.text(0.4 , 0.8 , "$t$ ="+ num_string )
     print(t)
     
     ax.clear()
     display_city()
     if t>0:
+
         infected_num = infect(G, agents, transmit_prob) #nodes infect their neighbors
         newly_recovered = recover(agents, recovery_prob) #nodes get recovered
         update_infection(agents) #actually change the health statuses (necessary for parallel updating) 
@@ -167,8 +182,8 @@ if do_animate:
 #    file_name = location + str(time.gmtime()[0:5]) + '.GIF'
 #    ani.save( file_name ,dpi=dpi, writer = 'imagemagick')
     #"""
-
-    ani = animation.FuncAnimation(fig, animate, save_count = 10)
+    
+    ani = animation.FuncAnimation(fig, animate, save_count = 20)
     dpi = 200
     writer = animation.writers['ffmpeg'](fps = 1)
     file_name = str(time.gmtime()[0:5]) + '.mp4'
