@@ -7,8 +7,8 @@ from scipy.stats import itemfreq
 
 #np.random.seed(0)
 
-temp_N = 120
-G = nx.erdos_renyi_graph(temp_N, 3 / temp_N)
+temp_N = 40
+G = nx.erdos_renyi_graph(temp_N, 2.3 / temp_N)
 
 N = len(G) #total number of nodes
 
@@ -17,7 +17,7 @@ run_time = 20000000
 transmit_prob = 0.5
 recovery_prob = 0.25
 learning_rate = 0.5
-beta = 1
+beta = 1.3
 
 
 agents = np.zeros((N), dtype=[('health', int), ('future', int),\

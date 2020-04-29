@@ -19,6 +19,17 @@ pos = {}
 if graph_type == 'erdos':
     pos = nx.circular_layout(G)
     #pos = nx.kamada_kawai_layout(G)
+
+    #for i, p in enumerate(pos):
+        #if i % 3 == 0:
+            #pos[i] = pos[i] * 1.5
+            #print('0')
+        #elif (i % 3 == 1):
+            #pos[i] = pos[i] * 2
+            #print('1')
+        #else:
+            #pos[i] = pos[i] * 0
+            #print('last2')
     True
 elif graph_type == 'grid':
     #pos = nx.circular_layout(G)
@@ -35,11 +46,12 @@ pos_array = np.array( list( pos.values() ) )
 #fig, axes= plt.subplots(1,2, figsize=(5,5))
 #fig.subplots_adjust(wspace = 0)
 #ax, ay = axes
-figure_ratio = 0.65
+figure_ratio = 0.75
 fig = plt.figure(figsize=(5*(0.9+figure_ratio), 5 ) )
 fig.subplots_adjust(wspace = 0)
 gs = gridspec.GridSpec(1, 2, width_ratios=[1, figure_ratio]) 
 ax = plt.subplot(gs[0])
+
 #ax0.plot(x, y)
 ay = plt.subplot(gs[1])
 #ay.plot(y, x)
@@ -61,24 +73,31 @@ def display_city(create_legend = True):
             #print('so: ', social_class)
             if (len(this_subgroup_list)):
                 nx.draw_networkx_nodes(G,pos = pos, ax = ax, nodelist=list(this_subgroup_list),  node_color = color_code[health_status]\
-               , node_shape = shape_code[social_class], alpha = 1,\
+               , node_shape = shape_code[social_class], node_size = 150, alpha = 1,\
                edgecolors = 'black')
                #edgecolors = color_code[health_status)
                 #nx.draw_networkx_nodes(G,pos = pos, ax = ax, nodelist=np.array([1,2]),  node_color = 'r', node_shape = 'o', alpha = alpha, edgecolors = 'r')
     
-    leavers = list( np.where(agents['strategy'] == 1)[0] )
-    visible_edges = [edge for edge in G.edges() if( edge[0] in leavers  and edge[1] in leavers) ]
-    invisible_edges = [edge for edge in G.edges() if not ( edge[0] in leavers  and edge[1] in leavers) ]
+    #stayers = list( np.where(agents['strategy'] == 1)[0] )
+    stayers = np.all ([agents['strategy'] == 0, agents['health'] >= -1], axis = 0)
+    
+    dead_edges = [edge for edge in G.edges() if( agents[edge[0]]['health'] == -2 or  agents[edge[1]]['health'] == -2) ]
+    
+    visible_edges = [edge for edge in G.edges()\
+     if( edge[0] in stayers  and edge[1] in stayers) ]
+    
+    invisible_edges = [edge for edge in G.edges() if not(edge in visible_edges or edge in dead_edges) ]
     
     nx.draw_networkx_edges(G,pos = pos, ax = ax, alpha = alpha*0.8, width = 1.2, edge_color = 'black', edgelist = visible_edges)
     nx.draw_networkx_edges(G,pos = pos, ax = ax, alpha = alpha/4, width = 1, style = 'dashed' ,edge_color = 'black', edgelist = invisible_edges)
     
     stayers = list( np.where(agents['strategy'] == 0)[0] )
+    stayers = list(np.where(np.all ([agents['strategy'] == 0, agents['health'] >= 0], axis = 0)))
     stayers_pos = pos_array[stayers]
     x = stayers_pos[:, 0]
     y = stayers_pos[:, 1]
 
-    ax.scatter(x, y, s = 1700, facecolors='none', linestyle='dashdot' \
+    ax.scatter(x, y, s = 800, facecolors='none', linestyle='dashdot' \
        , edgecolors='green', linewidth = 1.8, alpha = 0.8)
 
     
@@ -103,11 +122,11 @@ def display_city(create_legend = True):
                               markerfacecolor='tab:gray', markersize=10, alpha = alpha),
 
                               
-                       Line2D([0], [0], marker='s', color='w', markeredgecolor='black', label='Lower Class',
+                       Line2D([0], [0], marker='s', color='w', markeredgecolor='black', label='Low SES',
                               markerfacecolor='white', markersize=10, alpha = alpha),
-                       Line2D([0], [0], marker='o', color='w', markeredgecolor='black', label='Middle Class',
+                       Line2D([0], [0], marker='o', color='w', markeredgecolor='black', label='Middle SES',
                               markerfacecolor='white', markersize=10, alpha = alpha),
-                       Line2D([0], [0], marker='^', color='w', markeredgecolor='black', label='Upper Class',
+                       Line2D([0], [0], marker='^', color='w', markeredgecolor='black', label='High SES',
                               markerfacecolor='white', markersize=10, alpha = alpha),
                        Line2D([0], [0], marker='o', color='w', linewidth = 2, markeredgecolor='green', label='Staying Home',
                               markerfacecolor='white', markersize=14, alpha = alpha, linestyle='dashdot'),
@@ -127,6 +146,10 @@ def display_city(create_legend = True):
     #plt.show()
     print( 'healthies = ', np.sum(agents['health'] == 0) )
     return fig
+
+#def move_the_removed():
+        
+
 
 def display_candidates( movers ):
     movers_list = list( movers )
@@ -159,6 +182,12 @@ def animate(t):
     #ay.set_title("$t$ ="+ num_string)
     ay.text(0.4 , 0.8 , "$t$ ="+ num_string )
     print(t)
+    newly_removed = np.where(agents['health'] <=-1)[0]
+#    if len(newly_removed):
+#        pause = 20
+#        for node in newly_removed:
+#            pos[node] *= 1.05
+#            True
     
     ax.clear()
     display_city()
@@ -170,7 +199,9 @@ def animate(t):
         pred = predict_infected_num(agents, pred, learning_rate) #predict the number of upcoming infected agents for the next step
         survivor_num = update_strategy(agents, exp_stay_home_reward, pred * infection_reward, beta) #update strategies (going out and staying in)
     
-    
+    #ax.set_xlim([-1,1])
+    ax.set_xlim( np.array(ax.get_xlim())*1.1 )
+    ax.set_ylim( np.array(ax.get_ylim())*1.1 )
     return fig
 
 #"""
