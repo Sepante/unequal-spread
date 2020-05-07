@@ -4,35 +4,51 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from functions import *
 from scipy.stats import itemfreq
+from network_generator import generate_network
 
 #np.random.seed(0)
 
-temp_N = 40
-G = nx.erdos_renyi_graph(temp_N, 2.3 / temp_N)
+#temp_N = 10
+#G = nx.erdos_renyi_graph(temp_N, 2.3 / temp_N)
+G = generate_network(1000)
 
 N = len(G) #total number of nodes
 
-run_number = 20
+run_number = 100
 run_time = 20000000
 transmit_prob = 0.5
+#transmit_prob = 1
 recovery_prob = 0.25
+#recovery_prob = 0
 learning_rate = 0.5
-beta = 1.3
+beta = 1
+
+MODEL = 1 #0: n
 
 
 agents = np.zeros((N), dtype=[('health', int), ('future', int),\
 ('strategy',int), ('social_class',int)] )
 
-social_class_num = 3
+social_class_num = 4
 
-stay_home_reward = np.array([-2.8, -1.5, -1])
+stay_home_reward = np.array([-0.6, -1.9, -1, -1.6]) #W - B - A - L
+#stay_home_reward = np.array([-2.8, -1.5, -1])
 infection_reward = -3
-exp_stay_home_reward = tuple(np.exp(beta * stay_home_reward))
-#exponential 
+block_list = np.array( [G.nodes[i]['block'] for i in range(len(G))] )
 
+
+
+if MODEL == 1: # segregation only
+    stay_home_reward = np.array([-1.312, -1.312, -1.312, -1.312])#(sizes * stay_home_reward).sum()
+    
+elif MODEL == 2: # SES only
+    np.random.shuffle( block_list )
 #init
 
-agents['social_class'] = np.random.randint(0, 3, N)
+#agents['social_class'] = np.random.randint(0, 3, N)
+exp_stay_home_reward = tuple(np.exp(beta * stay_home_reward))
+
+agents['social_class'] = block_list
 
 #health : 0 -> suceptible
 #health > 0 -> number of days after infection
@@ -47,6 +63,7 @@ results = pd.DataFrame( np.zeros((run_number, social_class_num), int) )
 results.columns = ['class_'+str(i) for i in range(social_class_num) ]
 if __name__ == "__main__":
     for run in range(run_number):
+
         infected_num = 1
         survivor_num = 1
         prediction = 1
@@ -64,5 +81,10 @@ if __name__ == "__main__":
                                 
                 
         results.iloc[run] = get_results(agents, social_class_num)
+        print(run)
 
-results.to_csv('infected_for_each_class.csv')
+rand_string = str(np.random.randint(100000000))
+id_string = 'infected_for_each_class, '+ 'Model =' + str(MODEL) + ', p ='+ str(transmit_prob) + ', r =' + str(recovery_prob) + ', ' + rand_string + '.csv'
+
+
+results.to_csv(id_string)

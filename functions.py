@@ -8,6 +8,7 @@ def init_agents(agents, N):
     agents['health'] = 0 #initially they all choose to go out.
     agents['future'] = 0 #initially they all choose to go out.
     infection_seed = np.random.randint(0, N) #the first infected node
+    #print(infection_seed)
     agents['health'][infection_seed] = 1
     agents['future'][infection_seed] = 1
 
@@ -82,7 +83,7 @@ def update_strategy(agents, exp_stay_home_reward, infection_reward_times_infecte
 def get_results(agents, social_class_num):
         finally_infected = agents['health'] < 0
         infected_classes = agents[finally_infected]['social_class']
-        print(infected_classes)
+        #print(infected_classes)
         infected_from_each_class = np.zeros(social_class_num, int)
         for social_class in range( social_class_num ):
             infected_from_each_class[social_class] = np.sum( infected_classes == social_class )

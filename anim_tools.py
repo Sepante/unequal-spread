@@ -79,19 +79,23 @@ def display_city(create_legend = True):
                 #nx.draw_networkx_nodes(G,pos = pos, ax = ax, nodelist=np.array([1,2]),  node_color = 'r', node_shape = 'o', alpha = alpha, edgecolors = 'r')
     
     #stayers = list( np.where(agents['strategy'] == 1)[0] )
-    stayers = np.all ([agents['strategy'] == 0, agents['health'] >= -1], axis = 0)
+    
+    
+    #stayers = np.all ([agents['strategy'] == 0, agents['health'] >= -1], axis = 0)
+    stayers = list(np.where(np.all ([agents['strategy'] == 0, agents['health'] >= -1], axis = 0)))[0]
+    #print( agents[stayers] )
     
     dead_edges = [edge for edge in G.edges() if( agents[edge[0]]['health'] == -2 or  agents[edge[1]]['health'] == -2) ]
     
     visible_edges = [edge for edge in G.edges()\
-     if( edge[0] in stayers  and edge[1] in stayers) ]
+     if( edge[0] not in stayers  and edge[1] not in stayers and edge not in dead_edges) ]
     
     invisible_edges = [edge for edge in G.edges() if not(edge in visible_edges or edge in dead_edges) ]
     
     nx.draw_networkx_edges(G,pos = pos, ax = ax, alpha = alpha*0.8, width = 1.2, edge_color = 'black', edgelist = visible_edges)
     nx.draw_networkx_edges(G,pos = pos, ax = ax, alpha = alpha/4, width = 1, style = 'dashed' ,edge_color = 'black', edgelist = invisible_edges)
     
-    stayers = list( np.where(agents['strategy'] == 0)[0] )
+#    stayers = list( np.where(agents['strategy'] == 0)[0] )
     stayers = list(np.where(np.all ([agents['strategy'] == 0, agents['health'] >= 0], axis = 0)))
     stayers_pos = pos_array[stayers]
     x = stayers_pos[:, 0]
@@ -144,10 +148,26 @@ def display_city(create_legend = True):
         #ay.legend(handles = legend_elements, bbox_to_anchor=(0.5, 0.5))#,
         #   bbox_transform=plt.gcf().transFigure)
     #plt.show()
-    print( 'healthies = ', np.sum(agents['health'] == 0) )
+    #print( 'healthies = ', np.sum(agents['health'] == 0) )
     return fig
 
-#def move_the_removed():
+def move_the_removed(newly_removed):
+    global moving_out_iter
+    if len(newly_removed):
+        print('iter: ', moving_out_iter)
+        if moving_out_iter <= 10:
+            moving_out_iter += 1
+            for node in newly_removed:
+                pos[node] /= 1.2
+                #print(node)
+                
+                
+            display_city()
+            return fig
+        else:
+            update_infection(agents)
+            moving_out_iter = 0
+
         
 
 
@@ -167,29 +187,36 @@ def display_candidates( movers ):
 
 #display_city()
 
-print(agents['health'] == 0)
+#print(agents['health'] == 0)
 prediction = 1
 pred = 1
 animation_phases = 3
 init_agents(agents, N)
+moving_out_iter = 0
 def animate(t):
+    global moving_out_iter
     global pred
-    print('animate says = ',pred)
+    #print('animate says = ',pred)
     if t == 0:
         pred = 1
     ay.clear()
+    ax.clear()
+    ax.set_xlim( np.array(ax.get_xlim())*1.1 )
+    ax.set_ylim( np.array(ax.get_ylim())*1.1 )
+
     num_string = str( int( t ) )
     #ay.set_title("$t$ ="+ num_string)
     ay.text(0.4 , 0.8 , "$t$ ="+ num_string )
     print(t)
-    newly_removed = np.where(agents['health'] <=-1)[0]
-#    if len(newly_removed):
-#        pause = 20
-#        for node in newly_removed:
-#            pos[node] *= 1.05
-#            True
+
     
-    ax.clear()
+    #################moving
+    newly_removed = np.where(agents['health'] ==-1)[0]
+    move_the_removed( newly_removed )
+    #################
+    
+    
+
     display_city()
     if t>0:
 
@@ -200,8 +227,6 @@ def animate(t):
         survivor_num = update_strategy(agents, exp_stay_home_reward, pred * infection_reward, beta) #update strategies (going out and staying in)
     
     #ax.set_xlim([-1,1])
-    ax.set_xlim( np.array(ax.get_xlim())*1.1 )
-    ax.set_ylim( np.array(ax.get_ylim())*1.1 )
     return fig
 
 #"""
@@ -214,8 +239,8 @@ if do_animate:
 #    ani.save( file_name ,dpi=dpi, writer = 'imagemagick')
     #"""
     
-    ani = animation.FuncAnimation(fig, animate, save_count = 20)
+    ani = animation.FuncAnimation(fig, animate, save_count = 40)
     dpi = 200
-    writer = animation.writers['ffmpeg'](fps = 1)
+    writer = animation.writers['ffmpeg'](fps = 0.8)
     file_name = str(time.gmtime()[0:5]) + '.mp4'
     ani.save( file_name, dpi=dpi, writer = writer)
