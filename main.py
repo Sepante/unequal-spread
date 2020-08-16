@@ -10,11 +10,11 @@ from network_generator import generate_network
 
 #temp_N = 10
 #G = nx.erdos_renyi_graph(temp_N, 2.3 / temp_N)
-G = generate_network(1000)
+G = generate_network(1000, True)
 
 N = len(G) #total number of nodes
 
-run_number = 100
+run_number = 3
 run_time = 20000000
 transmit_prob = 0.5
 #transmit_prob = 1
@@ -23,7 +23,7 @@ recovery_prob = 0.25
 learning_rate = 0.5
 beta = 1
 
-MODEL = 1 #0: n
+MODEL = 0 #0: n
 
 
 agents = np.zeros((N), dtype=[('health', int), ('future', int),\
@@ -43,6 +43,12 @@ if MODEL == 1: # segregation only
     
 elif MODEL == 2: # SES only
     np.random.shuffle( block_list )
+    
+elif MODEL == 0: # no segregation no SES no NOTHING!
+    stay_home_reward = np.array([-1.312, -1.312, -1.312, -1.312])#(sizes * stay_home_reward).sum()
+    np.random.shuffle( block_list )
+
+    
 #init
 
 #agents['social_class'] = np.random.randint(0, 3, N)
@@ -87,4 +93,4 @@ rand_string = str(np.random.randint(100000000))
 id_string = 'infected_for_each_class, '+ 'Model =' + str(MODEL) + ', p ='+ str(transmit_prob) + ', r =' + str(recovery_prob) + ', ' + rand_string + '.csv'
 
 
-results.to_csv(id_string)
+results.to_csv('Results/' + id_string)
