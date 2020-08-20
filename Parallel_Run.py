@@ -74,14 +74,16 @@ stay_home_reward = np.array([-0.6, -1.9, -1, -1.6]) #W - B - A - L
 jobs = []
 #seg_frac_seq = np.arange( 0, 1, 0.2 )
 #transmit_prob_seq = np.arange( 0.2, 1, 0.1 )
-seg_frac_seq = [0.5, 0.6]
-transmit_prob_seq = [ 0.1 ]
+seg_frac_seq = [0, 0.5, 0.8]
+transmit_prob_seq = [ 0.2, 0.4, 0.6, 0.8 ]
+
+uniform_reside = 1
 
 for seg_frac in seg_frac_seq:
     sizes, probs = connectivity_calc(N, social_class_num, seg_frac)
     for transmit_prob in transmit_prob_seq:
         args = (sizes, probs, seg_frac, social_class_num, beta, stay_home_reward, infection_reward\
-                , learning_rate, transmit_prob, recovery_prob, seg_frac)    
+                , learning_rate, transmit_prob, recovery_prob, seg_frac, uniform_reside)    
         
         for run in range(run_number):
             jobs.append( ( args + (np.random.randint(10000000),) ) )
@@ -91,7 +93,7 @@ print('Jobs Done!')
 #jobs = [ ( args + (np.random.randint(10000000),) )  for i in range(run_number)]
 
 
-params_titles = ['transmit_prob', 'segregation', 'SES_dispar', 'size_dispar' ]
+params_titles = ['transmit_prob', 'segregation', 'SES_dispar', 'size_dispar', 'uniform_reside' ]
 results = pd.DataFrame( np.zeros(( len(jobs) , social_class_num + len(params_titles)), int) )
 results.columns = params_titles + ['class_'+str(i) for i in range(social_class_num) ]
 

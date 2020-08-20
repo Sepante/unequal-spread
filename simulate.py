@@ -13,7 +13,7 @@ def simulate(args):
     #results.columns = ['class_'+str(i) for i in range(social_class_num) ]
     sizes, probs, seg_frac, social_class_num, beta\
     , stay_home_reward, infection_reward, learning_rate\
-    , transmit_prob, recovery_prob, seg_frac\
+    , transmit_prob, recovery_prob, seg_frac, uniform_reside\
     , random_seed = args
     
     N = sizes.sum()
@@ -27,6 +27,10 @@ def simulate(args):
     agents = np.zeros((N), dtype=[('health', int), ('future', int),\
                       ('strategy',int), ('social_class',int)] )
     block_list = np.array( [G.nodes[i]['block'] for i in range(len(G))] )
+    
+    if uniform_reside:
+        np.random.shuffle( block_list )
+    
     agents['social_class'] = block_list
 
 
@@ -56,9 +60,9 @@ def simulate(args):
                 survivor_num = update_strategy(agents, exp_stay_home_reward, prediction * infection_reward, beta) #update strategies (going out and staying in)
                                 
                 
-        #params = ['transmit_rate', 'segregation', 'SES_dispar', 'size_dispar' ]
-        params = [transmit_prob, seg_frac, stay_home_reward[0] - stay_home_reward[-1], sizes[0] - sizes[-1] ]
-        #print ( np.array( params + list( get_results(agents, social_class_num) ) ) )
+        #params_titles = ['transmit_prob', 'segregation', 'SES_dispar', 'size_dispar', 'uniform_reside' ]
+        params = [transmit_prob, seg_frac, stay_home_reward[0] - stay_home_reward[-1], sizes[0] - sizes[-1], uniform_reside ]
+        print ( np.array( params + list( get_results(agents, social_class_num) ) ) )
         return np.array( params + list( get_results(agents, social_class_num) ) )
 
     #rand_string = str(np.random.randint(100000000))
