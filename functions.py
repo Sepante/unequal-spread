@@ -88,3 +88,14 @@ def get_results(agents, social_class_num):
         for social_class in range( social_class_num ):
             infected_from_each_class[social_class] = np.sum( infected_classes == social_class )
         return infected_from_each_class
+    
+def get_timed_results(agents, social_class_num):
+    
+    currently_infected = agents['health'] < 0
+    infected_classes = agents[currently_infected]['social_class']
+    infected_from_each_class = np.zeros(social_class_num, int)
+    for social_class in range( social_class_num ):
+        infected_from_each_class[social_class] = np.sum( infected_classes == social_class )
+    return infected_from_each_class
+
+

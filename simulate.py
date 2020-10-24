@@ -13,14 +13,22 @@ def simulate(args):
     #results.columns = ['class_'+str(i) for i in range(social_class_num) ]
     sizes, probs, seg_frac, social_class_num, beta\
     , stay_home_reward, infection_reward, learning_rate\
-    , transmit_prob, recovery_prob, seg_frac, uniform_reside\
-    , random_seed = args
+    , transmit_prob, recovery_prob, uniform_reside\
+    , timed_output, random_seed = args
+    
+    #print(timed_output)
+    max_steps = 150
+    
+    if timed_output:
+        time_series = np.zeros((max_steps, social_class_num), int)
+        
     
     N = sizes.sum()
     
     #seeding the random to obtain different results
-    old_rd.seed(random_seed)
+    old_rd.seed(random_seed) #networkx operates based on this library
     np.random.seed(random_seed)
+    #print(random_seed)
 
     
     G = nx.stochastic_block_model(sizes, probs, sparse=True)
@@ -50,20 +58,38 @@ def simulate(args):
         #agents = init_agents(agents, N)
         init_agents(agents, N)
         run_time = 20000000 # Just means long enough.
-        for t in range(run_time):
-            if infected_num >= 1 and survivor_num >= 1: #if there are infectious agents and also if not everyone is infected
+        
+        #for t in range(run_time):
+        t = 0
+        while (infected_num >= 1 and survivor_num >= 1): #if there are infectious agents and also if not everyone is infected
+            #if infected_num >= 1 and survivor_num >= 1: #if there are infectious agents and also if not everyone is infected
+            if True:
                 infected_num = infect(G, agents, transmit_prob) #nodes infect their neighbors
                 newly_recovered = recover(agents, recovery_prob) #nodes get recovered
+                #print(newly_recovered)
                 update_infection(agents) #actually change the health statuses (necessary for parallel updating)
                 prediction = predict_infected_num(agents, prediction, learning_rate) #predict the number of upcoming infected agents for the next step
 
                 survivor_num = update_strategy(agents, exp_stay_home_reward, prediction * infection_reward, beta) #update strategies (going out and staying in)
-                                
                 
+                if timed_output:
+                    time_series[t] = get_timed_results(agents, social_class_num)
+
+            t += 1
+            #print(t)
+
+        #print(t)
+        #print(time_series)
+        if timed_output:
+            time_series[t-1:] = time_series[t-1]
+        #print(time_series)
         #params_titles = ['transmit_prob', 'segregation', 'SES_dispar', 'size_dispar', 'uniform_reside' ]
         params = [transmit_prob, seg_frac, stay_home_reward[0] - stay_home_reward[-1], sizes[0] - sizes[-1], uniform_reside ]
         print ( np.array( params + list( get_results(agents, social_class_num) ) ) )
-        return np.array( params + list( get_results(agents, social_class_num) ) )
+        if timed_output:
+            return params, time_series
+        else:
+            return np.array( params + list( get_results(agents, social_class_num) ) )
 
     #rand_string = str(np.random.randint(100000000))
     #id_string = 'infected_for_each_class, '+ 'Model =' + str(MODEL) + ', p ='+ str(transmit_prob) + ', r =' + str(recovery_prob) + ', ' + rand_string + '.csv'

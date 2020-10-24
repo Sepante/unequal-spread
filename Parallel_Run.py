@@ -2,67 +2,38 @@ import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
 import pandas as pd
-from functions import *
+#from functions import *
 #from scipy.stats import itemfreq
-from network_generator import generate_network
+#from network_generator import generate_network
 from simulate import simulate
 import multiprocessing as mp
 from connectivity_calc import connectivity_calc
+from pathlib import Path
 
-run_number = 1
+#### setup
+timed_output = False
+data_input = 'read'
+data_title = 'Chicago'
+data_dir = 'empirical_input/' + data_title + '/'
+#data_input = 'generate'
 
+run_number = 10
 N = 1000
 social_class_num = 2
 seg_frac = 0 #between 1 and zero
 
-#sizes, probs = connectivity_calc(N, social_class_num, seg_frac)
-
-
-#Spreading Model
-#transmit_prob = 0.5
 recovery_prob = 0.25
-
-
-#MODEL = 3 #0: n
-
-
-
-
 
 #Game Theory Model
 learning_rate = 0.5
 beta = 1
+
+
 infection_reward = -2.5
-
-
 stay_home_reward = np.array([-0.6, -1.9, -1, -1.6]) #W - B - A - L
 
 
 
-
-
-
-#block_list = np.array( [G.nodes[i]['block'] for i in range(len(G))] )
-
-
-
-#if MODEL == 1: # segregation only
-#    stay_home_reward = np.array([-1.312, -1.312, -1.312, -1.312])#(sizes * stay_home_reward).sum()
-#    
-#elif MODEL == 2: # SES only
-#    np.random.shuffle( block_list )
-#    
-#elif MODEL == 0: # no segregation no SES no NOTHING!
-#    stay_home_reward = np.array([-1.312, -1.312, -1.312, -1.312])#(sizes * stay_home_reward).sum()
-#    np.random.shuffle( block_list )
-#
-    
-#init
-
-#agents['social_class'] = np.random.randint(0, 3, N)
-#exp_stay_home_reward = tuple(np.exp(beta * stay_home_reward))
-
-#agents['social_class'] = block_list
 
 #health : 0 -> suceptible
 #health > 0 -> number of days after infection
@@ -74,39 +45,96 @@ stay_home_reward = np.array([-0.6, -1.9, -1, -1.6]) #W - B - A - L
 jobs = []
 #seg_frac_seq = np.arange( 0, 1, 0.2 )
 #transmit_prob_seq = np.arange( 0.2, 1, 0.1 )
-seg_frac_seq = [0, 0.5, 0.8]
-transmit_prob_seq = [ 0.2, 0.4, 0.6, 0.8 ]
+#seg_frac_seq = [0, 0.5, 0.8]
+#transmit_prob_seq = [ 0.2, 0.4, 0.6, 0.8 ]
+seg_frac_seq = [0.5]
+transmit_prob_seq = [0.5]
 
 uniform_reside = 1
 
-for seg_frac in seg_frac_seq:
-    sizes, probs = connectivity_calc(N, social_class_num, seg_frac)
+if data_input == 'generate':
+    for seg_frac in seg_frac_seq:
+        sizes, probs = connectivity_calc(N, social_class_num, seg_frac)
+        for transmit_prob in transmit_prob_seq:
+            args = (sizes, probs, seg_frac, social_class_num, beta, stay_home_reward, infection_reward\
+                    , learning_rate, transmit_prob, recovery_prob, uniform_reside, timed_output)    
+            
+            for run in range(run_number):
+                jobs.append( ( args + (np.random.randint(10000000),) ) )
+elif data_input == 'read':
+    
+    seg_frac = data_title
+    sizes = np.array( pd.read_csv(data_dir + 'Population_fraction.csv') )[0]
+    
+    social_class_num = len(sizes)
+    
+    sizes = sizes / sizes.sum() * N
+    sizes = sizes.astype('int')
+    
+    probs = np.array( pd.read_csv(data_dir + 'P_norm_adj.csv', index_col = 0) )
+    
+    Rewards_pd = pd.read_csv(data_dir + 'Rewards.csv')
+    infection_reward = float( Rewards_pd['Covid'] )
+    stay_home_reward = np.array( Rewards_pd.iloc[0] )[ :-1 ]
+    #print(probs)
     for transmit_prob in transmit_prob_seq:
         args = (sizes, probs, seg_frac, social_class_num, beta, stay_home_reward, infection_reward\
-                , learning_rate, transmit_prob, recovery_prob, seg_frac, uniform_reside)    
-        
-        for run in range(run_number):
-            jobs.append( ( args + (np.random.randint(10000000),) ) )
+            , learning_rate, transmit_prob, recovery_prob, uniform_reside, timed_output)    
+            
+    for run in range(run_number):
+        jobs.append( ( args + (np.random.randint(10000000),) ) )
 
-print('Jobs Done!')
+    
+#print('Jobs Done!')
 ##adding the random seeds.
 #jobs = [ ( args + (np.random.randint(10000000),) )  for i in range(run_number)]
 
-
-params_titles = ['transmit_prob', 'segregation', 'SES_dispar', 'size_dispar', 'uniform_reside' ]
-results = pd.DataFrame( np.zeros(( len(jobs) , social_class_num + len(params_titles)), int) )
-results.columns = params_titles + ['class_'+str(i) for i in range(social_class_num) ]
 
 
 with mp.Pool(mp.cpu_count()) as pool:
     p_r = pool.map_async(simulate, jobs)
     res = p_r.get()
 
-results[:] = res
-
 rand_string = str(np.random.randint(100000000))
 
-id_string = 'rewards=' + str(stay_home_reward) + '-infect_rew='  + '-recov =' + str(recovery_prob) + '-' + rand_string + '.csv'
+target_dir = "Results/"
+Path( target_dir ).mkdir(parents=True, exist_ok=True)
+
+if timed_output:
+    timed_results_params_with_index = ['realization', 't']
+    timed_results_params = ([ 'class_' + str(i) for i in range(social_class_num) ])
+    timed_results_params_with_index.extend(timed_results_params)
+    
 
 
-results.to_csv('Results/' + id_string)
+    
+    max_steps = len( res[-1][-1] )
+    
+    timed_results = pd.DataFrame( np.zeros(( max_steps * len(jobs) ,  len(timed_results_params_with_index) ), int) )
+    timed_results.columns = timed_results_params_with_index
+    
+    for i in range(len(res)):
+        param, result = res[i]
+#        print(result)
+        begin, end = max_steps * i, max_steps * (i+1) - 1 
+        
+        timed_results.loc[begin : end , 'realization'] = i
+        timed_results.loc[begin : end , 't'] = list(range(max_steps))
+        timed_results.loc[begin : end, timed_results_params]  = result
+        
+        id_string = 'timed=' + str(stay_home_reward) + '-infect_rew='  \
+        + str(infection_reward) + '-recov =' + str(recovery_prob) + '-' + rand_string + '.csv'        
+        timed_results.to_csv(target_dir + id_string, index = False)
+
+        
+else:
+    params_titles = ['transmit_prob', 'segregation', 'SES_dispar', 'size_dispar', 'uniform_reside' ]
+    results = pd.DataFrame( np.zeros(( len(jobs) , social_class_num + len(params_titles)), int) )
+    results.columns = params_titles + ['class_'+str(i) for i in range(social_class_num) ]
+
+    results[:] = res    
+    id_string = 'rewards=' + str(stay_home_reward) + '-infect_rew='  \
+        + str(infection_reward) + '-recov =' + str(recovery_prob) + '-' + rand_string + '.csv'        
+    results.to_csv(target_dir + id_string, index = False)
+
+print(id_string)
