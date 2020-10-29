@@ -6,9 +6,9 @@ import matplotlib.pyplot as plt
 
 def generate_network(n, on_the_run_tweaks):
     
-    P_norm = pd.read_csv('P_norm.csv', index_col = 0)
+    P_norm_dat = pd.read_csv('P_norm.csv', index_col = 0)
     
-    P_norm = np.array(P_norm)
+    P_norm = np.array(P_norm_dat)
     #print(P_norm)
 
 
@@ -46,6 +46,7 @@ def generate_network(n, on_the_run_tweaks):
         
         
     
+    print(probs)
     g = stochastic_block_model(sizes, probs, sparse=True)
     
     # neigh = np.array(list(map(lambda i: len(list(g.neighbors(i))), range(len(g)))))

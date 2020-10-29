@@ -17,7 +17,7 @@ def simulate(args):
     , timed_output, random_seed = args
     
     #print(timed_output)
-    max_steps = 150
+    max_steps = 80
     
     if timed_output:
         time_series = np.zeros((max_steps, social_class_num), int)
@@ -61,7 +61,7 @@ def simulate(args):
         
         #for t in range(run_time):
         t = 0
-        while (infected_num >= 1 and survivor_num >= 1): #if there are infectious agents and also if not everyone is infected
+        while ( (infected_num >= 1 and survivor_num >= 1) and t <= max_steps - 1): #if there are infectious agents and also if not everyone is infected
             #if infected_num >= 1 and survivor_num >= 1: #if there are infectious agents and also if not everyone is infected
             if True:
                 infected_num = infect(G, agents, transmit_prob) #nodes infect their neighbors
@@ -77,7 +77,8 @@ def simulate(args):
 
             t += 1
             #print(t)
-
+        if infected_num >= 1:
+            print( 'run reached max_steps limit' )
         #print(t)
         #print(time_series)
         if timed_output:
@@ -85,7 +86,7 @@ def simulate(args):
         #print(time_series)
         #params_titles = ['transmit_prob', 'segregation', 'SES_dispar', 'size_dispar', 'uniform_reside' ]
         params = [transmit_prob, seg_frac, stay_home_reward[0] - stay_home_reward[-1], sizes[0] - sizes[-1], uniform_reside ]
-        print ( np.array( params + list( get_results(agents, social_class_num) ) ) )
+        #print ( np.array( params + list( get_results(agents, social_class_num) ) ) )
         if timed_output:
             return params, time_series
         else:

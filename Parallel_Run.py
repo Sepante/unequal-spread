@@ -8,16 +8,17 @@ import pandas as pd
 from simulate import simulate
 import multiprocessing as mp
 from connectivity_calc import connectivity_calc
+import time
 from pathlib import Path
 
 #### setup
-timed_output = False
+timed_output = True
 data_input = 'read'
 data_title = 'Chicago'
 data_dir = 'empirical_input/' + data_title + '/'
 #data_input = 'generate'
 
-run_number = 10
+run_number = 50
 N = 1000
 social_class_num = 2
 seg_frac = 0 #between 1 and zero
@@ -50,7 +51,7 @@ jobs = []
 seg_frac_seq = [0.5]
 transmit_prob_seq = [0.5]
 
-uniform_reside = 1
+uniform_reside = 0
 
 if data_input == 'generate':
     for seg_frac in seg_frac_seq:
@@ -95,7 +96,8 @@ with mp.Pool(mp.cpu_count()) as pool:
     p_r = pool.map_async(simulate, jobs)
     res = p_r.get()
 
-rand_string = str(np.random.randint(100000000))
+#rand_string = str(np.random.randint(100000000))
+rand_string = str(time.gmtime()[1:6])
 
 target_dir = "Results/"
 Path( target_dir ).mkdir(parents=True, exist_ok=True)
@@ -122,9 +124,9 @@ if timed_output:
         timed_results.loc[begin : end , 't'] = list(range(max_steps))
         timed_results.loc[begin : end, timed_results_params]  = result
         
-        id_string = 'timed=' + str(stay_home_reward) + '-infect_rew='  \
-        + str(infection_reward) + '-recov =' + str(recovery_prob) + '-' + rand_string + '.csv'        
-        timed_results.to_csv(target_dir + id_string, index = False)
+    id_string = 'timed=' + str(stay_home_reward) + '-infect_rew='  \
+    + str(infection_reward) + '-recov =' + str(recovery_prob) + '-' + rand_string + '.csv'        
+    timed_results.to_csv(target_dir + id_string, index = False)
 
         
 else:
