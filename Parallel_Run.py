@@ -13,7 +13,8 @@ from pathlib import Path
 
 #### setup
 timed_output = True
-data_input = 'read'
+summarized_time_output = True
+data_input = 'generate' #read-generate
 data_title = 'Chicago'
 data_dir = 'empirical_input/' + data_title + '/'
 #data_input = 'generate'
@@ -49,7 +50,7 @@ jobs = []
 #seg_frac_seq = [0, 0.5, 0.8]
 #transmit_prob_seq = [ 0.2, 0.4, 0.6, 0.8 ]
 seg_frac_seq = [0.5]
-transmit_prob_seq = [0.5]
+transmit_prob_seq = [0.1]
 
 uniform_reside = 0
 
@@ -104,15 +105,16 @@ Path( target_dir ).mkdir(parents=True, exist_ok=True)
 
 if timed_output:
     timed_results_params_with_index = ['realization', 't']
-    timed_results_params = ([ 'class_' + str(i) for i in range(social_class_num) ])
-    timed_results_params_with_index.extend(timed_results_params)
+    timed_results_classes = ([ 'class_' + str(i) for i in range(social_class_num) ])
+    timed_results_params_with_index.extend(timed_results_classes)
     
 
 
     
     max_steps = len( res[-1][-1] )
     
-    timed_results = pd.DataFrame( np.zeros(( max_steps * len(jobs) ,  len(timed_results_params_with_index) ), int) )
+    timed_results = pd.DataFrame( np.zeros(( max_steps * len(jobs)\
+        , len(timed_results_params_with_index) ), int) )
     timed_results.columns = timed_results_params_with_index
     
     for i in range(len(res)):
@@ -122,11 +124,23 @@ if timed_output:
         
         timed_results.loc[begin : end , 'realization'] = i
         timed_results.loc[begin : end , 't'] = list(range(max_steps))
-        timed_results.loc[begin : end, timed_results_params]  = result
+        timed_results.loc[begin : end, timed_results_classes]  = result
         
     id_string = 'timed=' + str(stay_home_reward) + '-infect_rew='  \
     + str(infection_reward) + '-recov =' + str(recovery_prob) + '-' + rand_string + '.csv'        
     timed_results.to_csv(target_dir + id_string, index = False)
+    
+    if summarized_time_output:
+        summarized_timed_results = timed_results.groupby('t').mean().reset_index().drop('realization', 1)
+        
+        timed_std = timed_results.groupby('t').std().reset_index().drop('realization', 1)
+        
+        for soc_class in timed_results_classes:
+            summarized_timed_results[ soc_class + '_err'] = timed_std[ soc_class ] / np.sqrt( run_number )
+            
+            
+        
+        summarized_timed_results.to_csv(target_dir + 'summarized-' + id_string, index = False)
 
         
 else:
