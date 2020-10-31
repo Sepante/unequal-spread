@@ -44,11 +44,11 @@ def update_infection(agents):
     
     agents['health'] = agents['future']
     
-def get_newly_recovered_agents(agents, social_class = -1):
-    if social_class == -1:
+def get_newly_recovered_agents(agents, social_class = -1, compartment_to_look_at = 1):
+    if social_class == compartment_to_look_at:
         return agents['health'] == -1
     else:
-        return np.all( [ agents['social_class'] == social_class , agents['health'] == -1 ], axis = 0 )
+        return np.all( [ agents['social_class'] == social_class , agents['health'] == compartment_to_look_at ], axis = 0 )
     
     
     
@@ -56,11 +56,16 @@ def predict_infected_num(agents, t_prediction, learning_rate):
     #print('inside = ', t_prediction)
 
     newly_infected = np.sum( get_newly_recovered_agents(agents, -1) )
-    if newly_infected > t_prediction:
-        new_prediction = newly_infected
-    else:
-        new_prediction = t_prediction * (1-learning_rate ) + newly_infected * learning_rate
+    
+    ## only averages for lowering situation, for increases considers the new value.
+#    if newly_infected > t_prediction:
+#        new_prediction = newly_infected
+#    else:
+#        new_prediction = t_prediction * (1-learning_rate ) + newly_infected * learning_rate
+#    return new_prediction
+    new_prediction = t_prediction * (1-learning_rate ) + newly_infected * learning_rate
     return new_prediction
+
     
 def update_strategy(agents, exp_stay_home_reward, infection_reward_times_infected_num, beta):
     #survivor_num = np.sum( agents['health'] >= 0 )

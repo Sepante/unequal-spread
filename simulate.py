@@ -17,7 +17,7 @@ def simulate(args):
     , timed_output, random_seed = args
     
     #print(timed_output)
-    max_steps = 80
+    max_steps = 100
     
     if timed_output:
         time_series = np.zeros((max_steps, social_class_num), int)
@@ -74,6 +74,8 @@ def simulate(args):
                 
                 if timed_output:
                     time_series[t] = get_timed_results(agents, social_class_num)
+                    
+            #print(set(  agents['health'] ) )
 
             t += 1
             #print(t)
@@ -83,6 +85,8 @@ def simulate(args):
         #print(time_series)
         if timed_output:
             time_series[t-1:] = time_series[t-1]
+            #cumulative -> non-cumulative
+            time_series = np.diff( time_series, axis = 0 )
         #print(time_series)
         #params_titles = ['transmit_prob', 'segregation', 'SES_dispar', 'size_dispar', 'uniform_reside' ]
         params = [transmit_prob, seg_frac, stay_home_reward[0] - stay_home_reward[-1], sizes[0] - sizes[-1], uniform_reside ]
