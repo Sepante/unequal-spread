@@ -19,20 +19,21 @@ data_title = 'Chicago'
 data_dir = 'empirical_input/' + data_title + '/'
 #data_input = 'generate'
 
-run_number = 1
+run_number = 200
 N = 1000
-social_class_num = 2
+social_class_num = 3
 seg_frac = 0 #between 1 and zero
 
-recovery_prob = 0.25
+#recovery_prob = 0.025
+recovery_prob = 0.05
 
 #Game Theory Model
 learning_rate = 1
 beta = 1
 
 
-infection_reward = -2.5
-stay_home_reward = np.array([-0.6, -1.9, -1, -1.6]) #W - B - A - L
+infection_reward = -100
+stay_home_reward = np.array([-1, -3, -5, -2]) #W - B - A - L
 
 
 
@@ -49,8 +50,8 @@ jobs = []
 #transmit_prob_seq = np.arange( 0.2, 1, 0.1 )
 #seg_frac_seq = [0, 0.5, 0.8]
 #transmit_prob_seq = [ 0.2, 0.4, 0.6, 0.8 ]
-seg_frac_seq = [0.5, 0.2]
-transmit_prob_seq = [0.1, 0.04]
+seg_frac_seq = [0.8]
+transmit_prob_seq = [0.1]
 
 uniform_reside = 0
 
@@ -142,9 +143,10 @@ if timed_output:
     timed_results.to_csv(target_dir + id_string, index = False)
     
     if summarized_time_output:
-        summarized_timed_results = timed_results.groupby('t').mean().reset_index().drop('realization', 1)
         
-        timed_std = timed_results.groupby('t').std().reset_index().drop('realization', 1)
+        params_and_time = list( set().union( timed_results_params_titles, ['t'] ) )
+        summarized_timed_results = timed_results.groupby( params_and_time ).mean().reset_index().drop('realization', 1)
+        timed_std = timed_results.groupby( params_and_time ).std().reset_index().drop('realization', 1)
         
         for soc_class in timed_results_classes:
             summarized_timed_results[ soc_class + '_err'] = timed_std[ soc_class ] / np.sqrt( run_number )

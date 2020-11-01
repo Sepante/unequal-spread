@@ -45,17 +45,19 @@ def update_infection(agents):
     agents['health'] = agents['future']
     
 def get_newly_recovered_agents(agents, social_class = -1, compartment_to_look_at = 1):
-    if social_class == compartment_to_look_at:
-        return agents['health'] == -1
+    if social_class == -1:
+        return agents['health'] == compartment_to_look_at
     else:
         return np.all( [ agents['social_class'] == social_class , agents['health'] == compartment_to_look_at ], axis = 0 )
     
     
     
-def predict_infected_num(agents, t_prediction, learning_rate):
+def predict_infected_num(N, agents, t_prediction, learning_rate):
     #print('inside = ', t_prediction)
 
-    newly_infected = np.sum( get_newly_recovered_agents(agents, -1) )
+    newly_infected = np.sum( get_newly_recovered_agents(agents, social_class = -1, compartment_to_look_at = 1) ) / N
+    #if newly_infected:
+        #print("newly: ", newly_infected)
     
     ## only averages for lowering situation, for increases considers the new value.
 #    if newly_infected > t_prediction:
@@ -79,6 +81,7 @@ def update_strategy(agents, exp_stay_home_reward, infection_reward_times_infecte
         this_class_agents = (agents['social_class'] == social_class)
         
         staying_home_prob = exp_stay_home_reward[social_class]/ (exp_stay_home_reward[social_class] + exp_going_out_reward)
+        #print (social_class, staying_home_prob)
         
         agents['strategy'][ this_class_agents ] = np.random.choice([0, 1], np.sum(this_class_agents), p=[staying_home_prob, 1- staying_home_prob] )
     #print(infection_reward_times_infected_num , staying_home_prob)

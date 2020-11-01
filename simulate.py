@@ -17,7 +17,7 @@ def simulate(args):
     , timed_output, random_seed = args
     
     #print(timed_output)
-    max_steps = 100
+    max_steps = 400
     
     if timed_output:
         time_series = np.zeros((max_steps, social_class_num), int)
@@ -53,7 +53,7 @@ def simulate(args):
 
         infected_num = 1
         survivor_num = 1
-        prediction = 1
+        prediction = 0
 
         #agents = init_agents(agents, N)
         init_agents(agents, N)
@@ -68,7 +68,7 @@ def simulate(args):
                 newly_recovered = recover(agents, recovery_prob) #nodes get recovered
                 #print(newly_recovered)
                 update_infection(agents) #actually change the health statuses (necessary for parallel updating)
-                prediction = predict_infected_num(agents, prediction, learning_rate) #predict the number of upcoming infected agents for the next step
+                prediction = predict_infected_num(N, agents, prediction, learning_rate) #predict the number of upcoming infected agents for the next step
 
                 survivor_num = update_strategy(agents, exp_stay_home_reward, prediction * infection_reward, beta) #update strategies (going out and staying in)
                 
