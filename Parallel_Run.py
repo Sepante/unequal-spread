@@ -19,7 +19,7 @@ data_title = 'Chicago'
 data_dir = 'empirical_input/' + data_title + '/'
 #data_input = 'generate'
 
-run_number = 50
+run_number = 1
 N = 1000
 social_class_num = 2
 seg_frac = 0 #between 1 and zero
@@ -27,7 +27,7 @@ seg_frac = 0 #between 1 and zero
 recovery_prob = 0.25
 
 #Game Theory Model
-learning_rate = 0.5
+learning_rate = 1
 beta = 1
 
 
@@ -49,8 +49,8 @@ jobs = []
 #transmit_prob_seq = np.arange( 0.2, 1, 0.1 )
 #seg_frac_seq = [0, 0.5, 0.8]
 #transmit_prob_seq = [ 0.2, 0.4, 0.6, 0.8 ]
-seg_frac_seq = [0.5]
-transmit_prob_seq = [0.1]
+seg_frac_seq = [0.5, 0.2]
+transmit_prob_seq = [0.1, 0.04]
 
 uniform_reside = 0
 
@@ -108,6 +108,14 @@ if timed_output:
     timed_results_classes = ([ 'class_' + str(i) for i in range(social_class_num) ])
     timed_results_params_with_index.extend(timed_results_classes)
     
+    timed_results_params_titles = ['transmit_prob', 'seg_frac', 'recovery_prob'\
+           , 'infection_reward', 'beta']
+    
+    
+    timed_results_params_with_index.extend( timed_results_params_titles )
+    
+    
+    
 
 
     
@@ -118,13 +126,16 @@ if timed_output:
     timed_results.columns = timed_results_params_with_index
     
     for i in range(len(res)):
-        param, result = res[i]
+        params_for_timed_output, result = res[i]
 #        print(result)
         begin, end = max_steps * i, max_steps * (i+1) - 1 
         
         timed_results.loc[begin : end , 'realization'] = i
         timed_results.loc[begin : end , 't'] = list(range(max_steps))
         timed_results.loc[begin : end, timed_results_classes]  = result
+        
+        for p_i, param in enumerate( timed_results_params_titles ):
+            timed_results.loc[begin : end , param] = params_for_timed_output[p_i]
         
     id_string = 'timed=' + str(stay_home_reward) + '-infect_rew='  \
     + str(infection_reward) + '-recov =' + str(recovery_prob) + '-' + rand_string + '.csv'        

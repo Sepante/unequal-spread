@@ -90,9 +90,14 @@ def simulate(args):
         #print(time_series)
         #params_titles = ['transmit_prob', 'segregation', 'SES_dispar', 'size_dispar', 'uniform_reside' ]
         params = [transmit_prob, seg_frac, stay_home_reward[0] - stay_home_reward[-1], sizes[0] - sizes[-1], uniform_reside ]
+        params_for_timed_output = [transmit_prob, seg_frac, recovery_prob\
+           , infection_reward, beta]
+        
+        
         #print ( np.array( params + list( get_results(agents, social_class_num) ) ) )
         if timed_output:
-            return params, time_series
+            #return params, time_series
+            return params_for_timed_output, time_series
         else:
             return np.array( params + list( get_results(agents, social_class_num) ) )
 
