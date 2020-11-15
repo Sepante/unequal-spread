@@ -2,15 +2,29 @@ import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
 
-def init_agents(agents, N):
+def init_agents(agents, N, initial_infectious_num, sizes, social_class_num):
     #global agents
     agents['strategy'] = 1 #initially they all choose to go out.
     agents['health'] = 0 #initially they all choose to go out.
     agents['future'] = 0 #initially they all choose to go out.
-    infection_seed = np.random.randint(0, N) #the first infected node
-    #print(infection_seed)
-    agents['health'][infection_seed] = 1
-    agents['future'][infection_seed] = 1
+    #infection_seed = np.random.randint(0, N) #the first infected node
+    
+    seed_share = np.round( sizes/sizes.sum() * initial_infectious_num )
+    seed_share = seed_share.astype('int')
+    
+    if seed_share.sum() != initial_infectious_num:
+        print( 'Actually ' + str(seed_share.sum()) + ' infectious seeds have been used.' )
+    
+    for social_class in range( social_class_num ):
+        people_from_the_class = np.where( agents['social_class'] == social_class )[0]
+        infection_seed = np.random.permutation( people_from_the_class )[: seed_share[social_class] ]
+        #print(infection_seed)
+        agents['health'][infection_seed] = 1
+        agents['future'][infection_seed] = 1
+        #print(infection_seed)
+    
+    #print( np.where(agents['health'] == 1)[0] )
+
 
 
 def infect(G, agents, transmit_prob):
@@ -99,7 +113,7 @@ def get_results(agents, social_class_num):
     
 def get_timed_results(agents, social_class_num):
     
-    currently_infected = agents['health'] < 0
+    currently_infected = agents['health'] > 0
     infected_classes = agents[currently_infected]['social_class']
     infected_from_each_class = np.zeros(social_class_num, int)
     for social_class in range( social_class_num ):

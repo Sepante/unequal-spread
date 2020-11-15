@@ -19,21 +19,25 @@ data_title = 'Chicago'
 data_dir = 'empirical_input/' + data_title + '/'
 #data_input = 'generate'
 
-run_number = 200
+run_number = 1
 N = 1000
 social_class_num = 3
-seg_frac = 0 #between 1 and zero
+k = 40
+#seg_frac = 0 #between 1 and zero
 
 #recovery_prob = 0.025
-recovery_prob = 0.05
+transmit_prob_seq = [0.00025]
+#transmit_prob_seq = [1]
+
+recovery_prob = 0.003
 
 #Game Theory Model
 learning_rate = 1
-beta = 1
+beta = 10
 
 
-infection_reward = -100
-stay_home_reward = np.array([-1, -3, -5, -2]) #W - B - A - L
+infection_reward = -20
+stay_home_reward = np.array([-0.9, -1.5, -3, -1.2]) #W - B - A - L
 
 
 
@@ -50,14 +54,13 @@ jobs = []
 #transmit_prob_seq = np.arange( 0.2, 1, 0.1 )
 #seg_frac_seq = [0, 0.5, 0.8]
 #transmit_prob_seq = [ 0.2, 0.4, 0.6, 0.8 ]
-seg_frac_seq = [0.8]
-transmit_prob_seq = [0.1]
+seg_frac_seq = [ 0.5 ]
 
 uniform_reside = 0
 
 if data_input == 'generate':
     for seg_frac in seg_frac_seq:
-        sizes, probs = connectivity_calc(N, social_class_num, seg_frac)
+        sizes, probs = connectivity_calc(N, social_class_num, seg_frac, k)
         for transmit_prob in transmit_prob_seq:
             args = (sizes, probs, seg_frac, social_class_num, beta, stay_home_reward, infection_reward\
                     , learning_rate, transmit_prob, recovery_prob, uniform_reside, timed_output)    
@@ -93,11 +96,14 @@ elif data_input == 'read':
 #jobs = [ ( args + (np.random.randint(10000000),) )  for i in range(run_number)]
 
 
+start_time = time.time()
 
 with mp.Pool(mp.cpu_count()) as pool:
     p_r = pool.map_async(simulate, jobs)
     res = p_r.get()
+elapsed_time = time.time() - start_time
 
+print('elapsed time = ', elapsed_time)
 #rand_string = str(np.random.randint(100000000))
 rand_string = str(time.gmtime()[1:6])
 

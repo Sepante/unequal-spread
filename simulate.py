@@ -17,7 +17,8 @@ def simulate(args):
     , timed_output, random_seed = args
     
     #print(timed_output)
-    max_steps = 400
+    max_steps = 1000
+    initial_infectious_num = 12
     
     if timed_output:
         time_series = np.zeros((max_steps, social_class_num), int)
@@ -32,6 +33,10 @@ def simulate(args):
 
     
     G = nx.stochastic_block_model(sizes, probs, sparse=True)
+    
+    #print(  np.mean( [ G.degree[i] for i in range( len(G) ) ] ) )
+    #print( len(G) )
+    
     agents = np.zeros((N), dtype=[('health', int), ('future', int),\
                       ('strategy',int), ('social_class',int)] )
     block_list = np.array( [G.nodes[i]['block'] for i in range(len(G))] )
@@ -56,7 +61,7 @@ def simulate(args):
         prediction = 0
 
         #agents = init_agents(agents, N)
-        init_agents(agents, N)
+        init_agents(agents, N, initial_infectious_num, sizes, social_class_num)
         run_time = 20000000 # Just means long enough.
         
         #for t in range(run_time):
@@ -86,7 +91,7 @@ def simulate(args):
         if timed_output:
             time_series[t-1:] = time_series[t-1]
             #cumulative -> non-cumulative
-            time_series = np.diff( time_series, axis = 0 )
+            #time_series = np.diff( time_series, axis = 0 )
         #print(time_series)
         #params_titles = ['transmit_prob', 'segregation', 'SES_dispar', 'size_dispar', 'uniform_reside' ]
         params = [transmit_prob, seg_frac, stay_home_reward[0] - stay_home_reward[-1], sizes[0] - sizes[-1], uniform_reside ]
