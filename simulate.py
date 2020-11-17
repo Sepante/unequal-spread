@@ -1,14 +1,14 @@
 import numpy as np
 import random as old_rd
 import networkx as nx
-import matplotlib.pyplot as plt
 import pandas as pd
 from functions import *
-#from scipy.stats import itemfreq
-#from network_generator import generate_network
+#import time
 
 
 def simulate(args):
+    #start_time = time.time()
+
     #results = pd.DataFrame( np.zeros((run_number, social_class_num), int) )
     #results.columns = ['class_'+str(i) for i in range(social_class_num) ]
     sizes, probs, seg_frac, social_class_num, beta\
@@ -16,7 +16,6 @@ def simulate(args):
     , transmit_prob, recovery_prob, uniform_reside\
     , timed_output, random_seed = args
     
-    #print(timed_output)
     max_steps = 1000
     initial_infectious_num = 12
     
@@ -53,7 +52,7 @@ def simulate(args):
     exp_stay_home_reward = tuple(np.exp(beta * stay_home_reward))
 
     for run in range(run_number):
-        rand_string = str(np.random.randint(100000000))
+        #rand_string = str(np.random.randint(100000000))
         #print(rand_string)
 
         infected_num = 1
@@ -94,17 +93,23 @@ def simulate(args):
             #time_series = np.diff( time_series, axis = 0 )
         #print(time_series)
         #params_titles = ['transmit_prob', 'segregation', 'SES_dispar', 'size_dispar', 'uniform_reside' ]
-        params = [transmit_prob, seg_frac, stay_home_reward[0] - stay_home_reward[-1], sizes[0] - sizes[-1], uniform_reside ]
+        #params = [transmit_prob, seg_frac, stay_home_reward[0] - stay_home_reward[-1], sizes[0] - sizes[-1], uniform_reside ]
         params_for_timed_output = [transmit_prob, seg_frac, recovery_prob\
            , infection_reward, beta]
         
         
         #print ( np.array( params + list( get_results(agents, social_class_num) ) ) )
+        #elapsed_time = time.time() - start_time
+
+        #print(elapsed_time)
+        
         if timed_output:
             #return params, time_series
-            return params_for_timed_output, time_series
+            return params_for_timed_output, time_series, list( get_results(agents, social_class_num) )
         else:
-            return np.array( params + list( get_results(agents, social_class_num) ) )
+#            return np.array( params + list( get_results(agents, social_class_num) ) )
+            return params_for_timed_output, None , list( get_results(agents, social_class_num) )
+
 
     #rand_string = str(np.random.randint(100000000))
     #id_string = 'infected_for_each_class, '+ 'Model =' + str(MODEL) + ', p ='+ str(transmit_prob) + ', r =' + str(recovery_prob) + ', ' + rand_string + '.csv'

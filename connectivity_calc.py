@@ -27,7 +27,7 @@ def connectivity_calc(N, social_class_num, seg_frac, k):
     probs = ( ( 1 + (social_class_num - 1) * seg_frac ) / social_class_num ) * np.identity(social_class_num)\
     + ( (1-seg_frac) / social_class_num ) * anti_ones
 
-    print(probs)
+    #print(probs)
 
     
     predicted_mean_degree = sizes.dot(probs).dot(sizes) / N

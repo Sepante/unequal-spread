@@ -1,6 +1,4 @@
 import numpy as np
-import networkx as nx
-import matplotlib.pyplot as plt
 
 def init_agents(agents, N, initial_infectious_num, sizes, social_class_num):
     #global agents
@@ -103,13 +101,13 @@ def update_strategy(agents, exp_stay_home_reward, infection_reward_times_infecte
     return survivor_num
 
 def get_results(agents, social_class_num):
-        finally_infected = agents['health'] < 0
-        infected_classes = agents[finally_infected]['social_class']
-        #print(infected_classes)
-        infected_from_each_class = np.zeros(social_class_num, int)
-        for social_class in range( social_class_num ):
-            infected_from_each_class[social_class] = np.sum( infected_classes == social_class )
-        return infected_from_each_class
+    finally_infected = agents['health'] != 0
+    infected_classes = agents[finally_infected]['social_class']
+    #print(infected_classes)
+    infected_from_each_class = np.zeros(social_class_num, int)
+    for social_class in range( social_class_num ):
+        infected_from_each_class[social_class] = np.sum( infected_classes == social_class )
+    return infected_from_each_class
     
 def get_timed_results(agents, social_class_num):
     

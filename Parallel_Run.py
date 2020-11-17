@@ -2,29 +2,27 @@ import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
 import pandas as pd
-#from functions import *
-#from scipy.stats import itemfreq
-#from network_generator import generate_network
 from simulate import simulate
 import multiprocessing as mp
 from connectivity_calc import connectivity_calc
 import time
 from pathlib import Path
+from df_summarizer import df_summarizer
 
 #### setup
-timed_output = True
+timed_output = False
 summarized_time_output = True
 data_input = 'generate' #read-generate
 data_title = 'Chicago'
 data_dir = 'empirical_input/' + data_title + '/'
 #data_input = 'generate'
 
-run_number = 1
+run_number = 24
 N = 1000
-social_class_num = 3
+social_class_num = 2
 k = 40
 #seg_frac = 0 #between 1 and zero
-
+#np.random.seed(0)
 #recovery_prob = 0.025
 transmit_prob_seq = [0.00025]
 #transmit_prob_seq = [1]
@@ -54,7 +52,7 @@ jobs = []
 #transmit_prob_seq = np.arange( 0.2, 1, 0.1 )
 #seg_frac_seq = [0, 0.5, 0.8]
 #transmit_prob_seq = [ 0.2, 0.4, 0.6, 0.8 ]
-seg_frac_seq = [ 0.5 ]
+seg_frac_seq = [ 0, 0.1, 0.5, 0.8 ]
 
 uniform_reside = 0
 
@@ -98,48 +96,47 @@ elif data_input == 'read':
 
 start_time = time.time()
 
-with mp.Pool(mp.cpu_count()) as pool:
+processor_num = mp.cpu_count()
+
+print( 'processor_num=', str(processor_num) )
+
+with mp.Pool( processor_num ) as pool:
     p_r = pool.map_async(simulate, jobs)
     res = p_r.get()
 elapsed_time = time.time() - start_time
 
 print('elapsed time = ', elapsed_time)
 #rand_string = str(np.random.randint(100000000))
-rand_string = str(time.gmtime()[1:6])
+rand_string = str(time.gmtime()[:7]).replace('(', '').replace(')', '').replace(', ', '')
 
 target_dir = "Results/"
 Path( target_dir ).mkdir(parents=True, exist_ok=True)
 
 if timed_output:
     timed_results_params_with_index = ['realization', 't']
-    timed_results_classes = ([ 'class_' + str(i) for i in range(social_class_num) ])
-    timed_results_params_with_index.extend(timed_results_classes)
+    classes = ([ 'class_' + str(i) for i in range(social_class_num) ])
+    timed_results_params_with_index.extend(classes)
     
     timed_results_params_titles = ['transmit_prob', 'seg_frac', 'recovery_prob'\
            , 'infection_reward', 'beta']
-    
-    
+        
     timed_results_params_with_index.extend( timed_results_params_titles )
-    
-    
-    
-
-
-    
-    max_steps = len( res[-1][-1] )
+        
+    max_steps = len( res[-1][1] )
     
     timed_results = pd.DataFrame( np.zeros(( max_steps * len(jobs)\
         , len(timed_results_params_with_index) ), int) )
     timed_results.columns = timed_results_params_with_index
     
     for i in range(len(res)):
-        params_for_timed_output, result = res[i]
-#        print(result)
+        params_for_timed_output, result, _ = res[i]
+        
+        print(params_for_timed_output)
         begin, end = max_steps * i, max_steps * (i+1) - 1 
         
         timed_results.loc[begin : end , 'realization'] = i
         timed_results.loc[begin : end , 't'] = list(range(max_steps))
-        timed_results.loc[begin : end, timed_results_classes]  = result
+        timed_results.loc[begin : end, classes]  = result
         
         for p_i, param in enumerate( timed_results_params_titles ):
             timed_results.loc[begin : end , param] = params_for_timed_output[p_i]
@@ -150,26 +147,41 @@ if timed_output:
     
     if summarized_time_output:
         
-        params_and_time = list( set().union( timed_results_params_titles, ['t'] ) )
-        summarized_timed_results = timed_results.groupby( params_and_time ).mean().reset_index().drop('realization', 1)
-        timed_std = timed_results.groupby( params_and_time ).std().reset_index().drop('realization', 1)
+#        params_and_time = list( set().union( timed_results_params_titles, ['t'] ) )
+#        summarized_timed_results = timed_results.groupby( params_and_time ).mean().reset_index().drop('realization', 1)
+#        timed_std = timed_results.groupby( params_and_time ).std().reset_index().drop('realization', 1)
+#        
+#        for soc_class in classes:
+#            summarized_timed_results[ soc_class + '_err'] = timed_std[ soc_class ] / np.sqrt( run_number )
+#            
         
-        for soc_class in timed_results_classes:
-            summarized_timed_results[ soc_class + '_err'] = timed_std[ soc_class ] / np.sqrt( run_number )
-            
-            
-        
+        summarized_timed_results = df_summarizer(df = timed_results\
+         , outputs = classes, mean_over = 'realization')
         summarized_timed_results.to_csv(target_dir + 'summarized-' + id_string, index = False)
 
-        
-else:
-    params_titles = ['transmit_prob', 'segregation', 'SES_dispar', 'size_dispar', 'uniform_reside' ]
+
+
+#    params_titles = ['transmit_prob', 'segregation', 'SES_dispar', 'size_dispar', 'uniform_reside' ]
+    params_titles = ['transmit_prob', 'seg_frac', 'recovery_prob'\
+           , 'infection_reward', 'beta']
     results = pd.DataFrame( np.zeros(( len(jobs) , social_class_num + len(params_titles)), int) )
     results.columns = params_titles + ['class_'+str(i) for i in range(social_class_num) ]
 
-    results[:] = res    
+    #results[:] = res    
+    
+    for i in range(len(res)):
+        params_for_timed_output, _, result = res[i]
+        for p_i, param in enumerate( params_titles ):
+            results.loc[i , param] = params_for_timed_output[p_i]
+            
+        results.loc[i, classes]  = result
+
+    
     id_string = 'rewards=' + str(stay_home_reward) + '-infect_rew='  \
         + str(infection_reward) + '-recov =' + str(recovery_prob) + '-' + rand_string + '.csv'        
     results.to_csv(target_dir + id_string, index = False)
+    
+    summarized_results = df_summarizer(df = results\
+         , outputs = classes, mean_over = False)
 
 print(id_string)
