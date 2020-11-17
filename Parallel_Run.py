@@ -10,15 +10,15 @@ from pathlib import Path
 from df_summarizer import df_summarizer
 
 #### setup
-timed_output = False
+timed_output = True
 summarized_time_output = True
 data_input = 'generate' #read-generate
 data_title = 'Chicago'
 data_dir = 'empirical_input/' + data_title + '/'
 #data_input = 'generate'
 
-run_number = 24
-N = 1000
+run_number = 1
+N = 10000
 social_class_num = 2
 k = 40
 #seg_frac = 0 #between 1 and zero
@@ -52,7 +52,7 @@ jobs = []
 #transmit_prob_seq = np.arange( 0.2, 1, 0.1 )
 #seg_frac_seq = [0, 0.5, 0.8]
 #transmit_prob_seq = [ 0.2, 0.4, 0.6, 0.8 ]
-seg_frac_seq = [ 0, 0.1, 0.5, 0.8 ]
+seg_frac_seq = [ 0.2, 0.6, 0.8, 0.9 ]
 
 uniform_reside = 0
 
@@ -162,26 +162,26 @@ if timed_output:
 
 
 #    params_titles = ['transmit_prob', 'segregation', 'SES_dispar', 'size_dispar', 'uniform_reside' ]
-    params_titles = ['transmit_prob', 'seg_frac', 'recovery_prob'\
-           , 'infection_reward', 'beta']
-    results = pd.DataFrame( np.zeros(( len(jobs) , social_class_num + len(params_titles)), int) )
-    results.columns = params_titles + ['class_'+str(i) for i in range(social_class_num) ]
+params_titles = ['transmit_prob', 'seg_frac', 'recovery_prob'\
+       , 'infection_reward', 'beta']
+results = pd.DataFrame( np.zeros(( len(jobs) , social_class_num + len(params_titles)), int) )
+results.columns = params_titles + ['class_'+str(i) for i in range(social_class_num) ]
 
-    #results[:] = res    
-    
-    for i in range(len(res)):
-        params_for_timed_output, _, result = res[i]
-        for p_i, param in enumerate( params_titles ):
-            results.loc[i , param] = params_for_timed_output[p_i]
-            
-        results.loc[i, classes]  = result
+#results[:] = res    
 
-    
-    id_string = 'rewards=' + str(stay_home_reward) + '-infect_rew='  \
-        + str(infection_reward) + '-recov =' + str(recovery_prob) + '-' + rand_string + '.csv'        
-    results.to_csv(target_dir + id_string, index = False)
-    
-    summarized_results = df_summarizer(df = results\
-         , outputs = classes, mean_over = False)
+for i in range(len(res)):
+    params_for_timed_output, _, result = res[i]
+    for p_i, param in enumerate( params_titles ):
+        results.loc[i , param] = params_for_timed_output[p_i]
+        
+    results.loc[i, classes]  = result
+
+
+id_string = 'rewards=' + str(stay_home_reward) + '-infect_rew='  \
+    + str(infection_reward) + '-recov =' + str(recovery_prob) + '-' + rand_string + '.csv'        
+results.to_csv(target_dir + id_string, index = False)
+
+summarized_results = df_summarizer(df = results\
+     , outputs = classes, mean_over = False)
 
 print(id_string)
